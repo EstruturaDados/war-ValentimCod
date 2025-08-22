@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <locale.h> // Adicione esta linha
 
 
 // --- Constantes Globais ---
@@ -49,7 +50,7 @@ void exibirMissao(int idMissao);
 
 // Funções de lógica principal do jogo:
 void faseDeAtaque(Territorio *mapa, int qtd, const char *corJogador);
-void simularAtaque(Territorio *mapa, int origem, int destino);
+void simularAtaque(Territorio *origem, Territorio *destino);
 int sortearMissao(void);
 int verificarVitoria(const Territorio *mapa, int qtd, int idMissao, const char *corJogador);
 
@@ -59,41 +60,24 @@ void limparBufferEntrada(void);
 // --- Função Principal (main) ---
 // Função principal que orquestra o fluxo do jogo, chamando as outras funções em ordem.
 int main() {
-    // 1. Configuração Inicial (Setup):
-    setbuf(stdout, NULL);      // evita problemas de buffer no Windows
-    srand(time(NULL));         // inicializa aleatoriedade
-
-    // - Define o locale para português.
-     setlocale(LC_ALL, "Portuguese");
-
-    // - Inicializa a semente para geração de números aleatórios com base no tempo atual.
+    setbuf(stdout, NULL);
     srand(time(NULL));
+    setlocale(LC_ALL, "Portuguese");
 
-    // - Aloca a memória para o mapa do mundo e verifica se a alocação foi bem-sucedida.
     Territorio *mapa = alocarMapa(QTD_TERRITORIOS);
     if (!mapa) {
         printf("Erro: memória insuficiente!\n");
         return 1;
     }
 
-    // - Preenche os territórios com seus dados iniciais (tropas, donos, etc.).
     inicializarTerritorios(mapa, QTD_TERRITORIOS);
 
-    // - Define a cor do jogador e sorteia sua missão secreta.
     char corJogador[MAX_STR] = "Azul";
     int missao = sortearMissao();
 
     int opcao;
     int venceu = 0;
 
-    // 2. Laço Principal do Jogo (Game Loop):
-    // - Roda em um loop 'do-while' que continua até o jogador sair (opção 0) ou vencer.
-    // - A cada iteração, exibe o mapa, a missão e o menu de ações.
-    // - Lê a escolha do jogador e usa um 'switch' para chamar a função apropriada:
-    //   - Opção 1: Inicia a fase de ataque.
-    //   - Opção 2: Verifica se a condição de vitória foi alcançada e informa o jogador.
-    //   - Opção 0: Encerra o jogo.
-    // - Pausa a execução para que o jogador possa ler os resultados antes da próxima rodada.
     do {
         exibirMapa(mapa, QTD_TERRITORIOS);
         exibirMissao(missao);
@@ -122,37 +106,7 @@ int main() {
         }
 
     } while (opcao != 0 && !venceu);
-do {
-        exibirMapa(mapa, QTD_TERRITORIOS);
-        exibirMissao(missao);
-        exibirMenuPrincipal();
-        printf("Escolha: ");
-        scanf("%d", &opcao);
-        limparBufferEntrada();
 
-        switch (opcao) {
-            case 1:
-                faseDeAtaque(mapa, QTD_TERRITORIOS, corJogador);
-                break;
-            case 2:
-                venceu = verificarVitoria(mapa, QTD_TERRITORIOS, missao, corJogador);
-                if (venceu) {
-                    printf("\n🎉 Missão cumprida! Você venceu!\n");
-                } else {
-                    printf("\n⚠️ Ainda não cumpriu sua missão.\n");
-                }
-                break;
-            case 0:
-                printf("Encerrando o jogo...\n");
-                break;
-            default:
-                printf("Opção inválida!\n");
-        }
-
-    } while (opcao != 0 && !venceu);
-
-    // 3. Limpeza:
-    // - Ao final do jogo, libera a memória alocada para o mapa para evitar vazamentos de memória.
     liberarMemoria(mapa);
     return 0;
 }
@@ -188,9 +142,8 @@ void inicializarTerritorios(Territorio* mapa, int tamanho) {
 // liberarMemoria():
 void liberarMemoria(Territorio* mapa) {
     free(mapa);
-}void liberarMemoria(Territorio* mapa) {
-    free(mapa);
 }
+
 // Libera a memória previamente alocada para o mapa usando free.
 
 // exibirMenuPrincipal():
@@ -258,7 +211,8 @@ void faseDeAtaque(Territorio* mapa, int tamanho, const char* corJogador) {
 // Chama a função simularAtaque() para executar a lógica da batalha.
 
 // simularAtaque():
-void simularAtaque(Territorio* origem, Territorio* destino) {
+void simularAtaque(Territorio* origem, Territorio* destino)
+{
     if (origem->tropas < 2) {
         printf("Território de origem não possui tropas suficientes.\n");
         return;
@@ -326,4 +280,5 @@ int verificarVitoria(const Territorio* mapa, int tamanho, int missao, const char
 void limparBufferEntrada(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
+}
 // Função utilitária para limpar o buffer de entrada do teclado (stdin), evitando problemas com leituras consecutivas de scanf e getchar.
