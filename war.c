@@ -19,20 +19,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <locale.h> // Adicione esta linha
-
 
 // --- Constantes Globais ---
 // Definem valores fixos para o número de territórios, missões e tamanho máximo de strings, facilitando a manutenção.
 #define QTD_TERRITORIOS 5
 #define QTD_MISSOES 3
 #define MAX_STR 50
+#define MAX_NOME 30
+#define MAX_COR 10
 
 // --- Estrutura de Dados ---
 // Define a estrutura para um território, contendo seu nome, a cor do exército que o domina e o número de tropas.
 typedef struct {
-    char nome[MAX_STR];
-    char corExercito[MAX_STR];
+    char nome[MAX_NOME];
+    char cor[MAX_COR];
     int tropas;
 } Territorio;
 
@@ -62,15 +62,19 @@ void limparBufferEntrada(void);
 int main() {
     setbuf(stdout, NULL);
     srand(time(NULL));
-    setlocale(LC_ALL, "Portuguese");
 
-    Territorio *mapa = alocarMapa(QTD_TERRITORIOS);
+    int qtd;
+    printf("Quantos territórios deseja cadastrar? ");
+    scanf("%d", &qtd);
+    limparBufferEntrada();
+
+    Territorio* mapa = alocarMapa(qtd);
     if (!mapa) {
-        printf("Erro: memória insuficiente!\n");
+        printf("Erro ao alocar memória!\n");
         return 1;
     }
 
-    inicializarTerritorios(mapa, QTD_TERRITORIOS);
+    inicializarTerritorios(mapa, qtd);
 
     char corJogador[MAX_STR] = "Azul";
     int missao = sortearMissao();
@@ -79,7 +83,7 @@ int main() {
     int venceu = 0;
 
     do {
-        exibirMapa(mapa, QTD_TERRITORIOS);
+        exibirMapa(mapa, qtd);
         exibirMissao(missao);
         exibirMenuPrincipal();
         printf("Escolha: ");
@@ -88,10 +92,10 @@ int main() {
 
         switch (opcao) {
             case 1:
-                faseDeAtaque(mapa, QTD_TERRITORIOS, corJogador);
+                faseDeAtaque(mapa, qtd, corJogador);
                 break;
             case 2:
-                venceu = verificarVitoria(mapa, QTD_TERRITORIOS, missao, corJogador);
+                venceu = verificarVitoria(mapa, qtd, missao, corJogador);
                 if (venceu) {
                     printf("\n🎉 Missão cumprida! Você venceu!\n");
                 } else {
@@ -126,12 +130,12 @@ Territorio* alocarMapa(int tamanho) {
 void inicializarTerritorios(Territorio* mapa, int tamanho) {
     for (int i = 0; i < tamanho; i++) {
         printf("Digite o nome do território %d: ", i + 1);
-        fgets(mapa[i].nome, MAX_STR, stdin);
+        fgets(mapa[i].nome, MAX_NOME, stdin);
         mapa[i].nome[strcspn(mapa[i].nome, "\n")] = '\0';
 
         printf("Digite a cor do exército: ");
-        fgets(mapa[i].corExercito, MAX_STR, stdin);
-        mapa[i].corExercito[strcspn(mapa[i].corExercito, "\n")] = '\0';
+        fgets(mapa[i].cor, MAX_COR, stdin);
+        mapa[i].cor[strcspn(mapa[i].cor, "\n")] = '\0';
 
         printf("Digite o número de tropas: ");
         scanf("%d", &mapa[i].tropas);
@@ -159,13 +163,10 @@ void exibirMenuPrincipal(void) {
 // exibirMapa():
 void exibirMapa(const Territorio* mapa, int tamanho) {
     printf("\n=== ESTADO ATUAL DO MAPA ===\n");
-    printf("%-20s | %-15s | Tropas\n", "Território", "Exército");
-    printf("--------------------------------------------\n");
+    printf("%-3s | %-25s | %-10s | Tropas\n", "ID", "Nome", "Cor");
+    printf("-----------------------------------------------\n");
     for (int i = 0; i < tamanho; i++) {
-        printf("%-20s | %-15s | %d\n",
-               mapa[i].nome,
-               mapa[i].corExercito,
-               mapa[i].tropas);
+        printf("%-3d | %-25s | %-10s | %d\n", i, mapa[i].nome, mapa[i].cor, mapa[i].tropas);
     }
 }
 // Mostra o estado atual de todos os territórios no mapa, formatado como uma tabela.
@@ -199,7 +200,7 @@ void faseDeAtaque(Territorio* mapa, int tamanho, const char* corJogador) {
         return;
     }
 
-    if (strcmp(mapa[origem].corExercito, corJogador) != 0) {
+    if (strcmp(mapa[origem].cor, corJogador) != 0) {
         printf("Você só pode atacar de territórios que controla!\n");
         return;
     }
@@ -218,22 +219,27 @@ void simularAtaque(Territorio* origem, Territorio* destino)
         return;
     }
 
+    printf("\nAtacante: %s (%s) | Tropas: %d\n", origem->nome, origem->cor, origem->tropas);
+    printf("Defensor: %s (%s) | Tropas: %d\n", destino->nome, destino->cor, destino->tropas);
+
     int dadoAtacante = rand() % 6 + 1;
     int dadoDefensor = rand() % 6 + 1;
 
-    printf("Ataque: %d | Defesa: %d\n", dadoAtacante, dadoDefensor);
+    printf("Dado do atacante: %d | Dado do defensor: %d\n", dadoAtacante, dadoDefensor);
 
     if (dadoAtacante > dadoDefensor) {
+        int tropasAntes = destino->tropas;
         destino->tropas--;
-        printf("Defensor perdeu 1 tropa!\n");
+        printf("Defensor perdeu 1 tropa! (de %d para %d)\n", tropasAntes, destino->tropas);
         if (destino->tropas <= 0) {
             destino->tropas = 1;
-            strcpy(destino->corExercito, origem->corExercito);
+            strcpy(destino->cor, origem->cor);
             printf("Território %s conquistado!\n", destino->nome);
         }
     } else {
+        int tropasAntes = origem->tropas;
         origem->tropas--;
-        printf("Atacante perdeu 1 tropa!\n");
+        printf("Atacante perdeu 1 tropa! (de %d para %d)\n", tropasAntes, origem->tropas);
     }
 }
 // Executa a lógica de uma batalha entre dois territórios.
@@ -252,20 +258,20 @@ int verificarVitoria(const Territorio* mapa, int tamanho, int missao, const char
         case 0: {
             int count = 0;
             for (int i = 0; i < tamanho; i++)
-                if (strcmp(mapa[i].corExercito, corJogador) == 0)
+                if (strcmp(mapa[i].cor, corJogador) == 0)
                     count++;
             return count >= 2;
         }
         case 1: {
             for (int i = 0; i < tamanho; i++)
-                if (strcmp(mapa[i].corExercito, "Vermelho") == 0)
+                if (strcmp(mapa[i].cor, "Vermelho") == 0)
                     return 0;
             return 1;
         }
         case 2: {
             int total = 0;
             for (int i = 0; i < tamanho; i++)
-                if (strcmp(mapa[i].corExercito, corJogador) == 0)
+                if (strcmp(mapa[i].cor, corJogador) == 0)
                     total += mapa[i].tropas;
             return total >= 15;
         }
