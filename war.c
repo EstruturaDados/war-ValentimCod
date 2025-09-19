@@ -206,10 +206,10 @@ void exibirMissao(const char* missao) {
 
 const char* missoes[QTD_MISSOES] = {
     "Conquistar pelo menos 2 territórios.",
-    "Eliminar todos os territórios da cor Vermelho.",
     "Controlar pelo menos 15 tropas.",
     "Conquistar 2 territórios consecutivos.",
-    "Ter pelo menos 1 território de cada cor cadastrada."
+    "Ter pelo menos 1 território de cada cor cadastrada.",
+    "Ser dono de todos os territórios."
 };
 
 // faseDeAtaque():
@@ -289,13 +289,6 @@ int verificarVitoria(const Territorio* mapa, int tamanho, int missao, const char
             return count >= 2;
         }
         case 1: {
-            // Eliminar todos os territórios da cor Vermelho
-            for (int i = 0; i < tamanho; i++)
-                if (strcmp(mapa[i].cor, "Vermelho") == 0)
-                    return 0;
-            return 1;
-        }
-        case 2: {
             // Controlar pelo menos 15 tropas
             int total = 0;
             for (int i = 0; i < tamanho; i++)
@@ -303,21 +296,51 @@ int verificarVitoria(const Territorio* mapa, int tamanho, int missao, const char
                     total += mapa[i].tropas;
             return total >= 15;
         }
-        case 3: {
+        case 2: {
             // Conquistar 2 territórios consecutivos
             for (int i = 0; i < tamanho - 1; i++)
                 if (strcmp(mapa[i].cor, corJogador) == 0 && strcmp(mapa[i+1].cor, corJogador) == 0)
                     return 1;
             return 0;
         }
-        case 4: {
+        case 3: {
             // Ter pelo menos 1 território de cada cor cadastrada
-            int temAzul = 0, temVermelho = 0;
+            int temCor[MAX_COR] = {0};
+            int qtdCores = 0;
             for (int i = 0; i < tamanho; i++) {
-                if (strcmp(mapa[i].cor, "Azul") == 0) temAzul = 1;
-                if (strcmp(mapa[i].cor, "Vermelho") == 0) temVermelho = 1;
+                int jaTem = 0;
+                for (int j = 0; j < qtdCores; j++) {
+                    if (strcmp(mapa[i].cor, mapa[j].cor) == 0) {
+                        jaTem = 1;
+                        break;
+                    }
+                }
+                if (!jaTem) {
+                    temCor[qtdCores++] = 1;
+                }
             }
-            return temAzul && temVermelho;
+            int temTodas = 1;
+            for (int i = 0; i < qtdCores; i++) {
+                int achou = 0;
+                for (int j = 0; j < tamanho; j++) {
+                    if (strcmp(mapa[j].cor, mapa[i].cor) == 0 && strcmp(mapa[j].cor, corJogador) == 0) {
+                        achou = 1;
+                        break;
+                    }
+                }
+                if (!achou) {
+                    temTodas = 0;
+                    break;
+                }
+            }
+            return temTodas;
+        }
+        case 4: {
+            // Ser dono de todos os territórios
+            for (int i = 0; i < tamanho; i++)
+                if (strcmp(mapa[i].cor, corJogador) != 0)
+                    return 0;
+            return 1;
         }
         default:
             return 0;
