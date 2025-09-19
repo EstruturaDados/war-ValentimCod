@@ -56,6 +56,7 @@ int verificarVitoria(const Territorio *mapa, int qtd, int idMissao, const char *
 
 // Função utilitária:
 void limparBufferEntrada(void);
+void atribuirMissao(char** destino, const char* missoes[], int totalMissoes);
 
 // --- Função Principal (main) ---
 // Função principal que orquestra o fluxo do jogo, chamando as outras funções em ordem.
@@ -209,7 +210,12 @@ const char* missoes[QTD_MISSOES] = {
     "Controlar pelo menos 15 tropas.",
     "Conquistar 2 territórios consecutivos.",
     "Ter pelo menos 1 território de cada cor cadastrada.",
-    "Ser dono de todos os territórios."
+    "Ser dono de todos os territórios.",
+    "Ter um território com mais de 10 tropas.",
+    "Não perder nenhum território durante o jogo.",
+    "Ter apenas territórios de uma única cor.",
+    "Conquistar o território com maior número de tropas.",
+    "Ficar com pelo menos 3 territórios com 5 ou mais tropas."
 };
 
 // faseDeAtaque():
@@ -356,3 +362,10 @@ void limparBufferEntrada(void) {
     while ((c = getchar()) != '\n' && c != EOF);
 }
 // Função utilitária para limpar o buffer de entrada do teclado (stdin), evitando problemas com leituras consecutivas de scanf e getchar.
+
+// Sorteia uma missão e aloca dinamicamente a string
+void atribuirMissao(char** destino, const char* missoes[], int totalMissoes) {
+    int sorteada = rand() % totalMissoes;
+    *destino = (char*)malloc(strlen(missoes[sorteada]) + 1);
+    strcpy(*destino, missoes[sorteada]);
+}
